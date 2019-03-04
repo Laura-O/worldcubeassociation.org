@@ -1,18 +1,149 @@
 <div class="navbar navbar-default navbar-static-top" role="navigation">
-  <div class="container">
-    <div class="navbar-brand">
-      <a href="<%= root_path %>"><%= image_tag "wca_logo.svg" %></a>
-      <span>
-        <a href="<%= root_path %>">World Cube Association</a>
-        <br>
+
+  <div id="top-nav" class="container-fluid">
+    <ul class="nav navbar-nav social-icons">
+      <li>
         <%= link_to(icon("instagram"), "https://www.instagram.com/thewcaofficial/", target: "_blank", class: "hide-new-window-icon") %>
+      </li>
+      <li>
         <%= link_to(icon("facebook-official"), "https://www.facebook.com/WorldCubeAssociation/", target: "_blank", class: "hide-new-window-icon") %>
+      </li>
+      <li>
         <%= link_to(icon("twitter"), "https://www.twitter.com/theWCAofficial/", target: "_blank", class: "hide-new-window-icon") %>
+      </li>
+      <li>
         <%= link_to(icon("reddit"), "https://www.reddit.com/r/TheWCAOfficial/", target: "_blank", class: "hide-new-window-icon") %>
+      </li>
+      <li>
         <%= link_to(icon("twitch"), "https://www.twitch.tv/worldcubeassociation/", target: "_blank", class: "hide-new-window-icon") %>
+      </li>
+      <li>
         <%= link_to(icon("weibo"), "https://www.weibo.com/theWCA/", target: "_blank", class: "hide-new-window-icon") %>
-      </span>
-    </div>
+      </li>
+    </ul>
+
+
+    <ul class="nav navbar-nav language-settings">
+      <li class="dropdown">
+        <a href="#" class="dropdown-toggle top-nav" data-toggle="dropdown" data-hover="dropdown">
+          <% active_locale_info = Locales::AVAILABLE[I18n.locale] %>
+          <%= flag_icon active_locale_info[:flag_id] %> <span
+            class="selected hidden-xs hidden-sm"><%= active_locale_info[:name] %></span>
+          <span class="caret"></span>
+        </a>
+        <ul class="dropdown-menu" id="locale-selector" role="menu">
+          <% Locales::AVAILABLE.each do |l, data| %>
+          <li class="<%= l == I18n.locale ? "active" : "" %>">
+            <%= link_to update_locale_path(l) do %>
+            <%= flag_icon data[:flag_id] %> <%= data[:name] %>
+            <% end %>
+          </li>
+          <% end %>
+        </ul>
+      </li>
+
+    </ul>
+    <ul class="nav navbar-nav account">
+      <li class="dropdown">
+        <a href="#" class="dropdown-toggle top-nav" data-toggle="dropdown" data-hover="dropdown">
+          <% if current_user %>
+          <% notification_count = notifications_for_user(current_user).length %>
+          <%= render "shared/user_avatar", user: current_user, do_not_show_full_image_on_hover: true %>
+          <% if notification_count > 0 %>
+          <span class="badge"><%= notification_count %></span>
+          <% end %>
+          <% else %>
+          <%= t 'devise.shared.links.sign_in' %>
+          <% end %>
+          <span class="caret"></span>
+        </a>
+
+        <ul class="dropdown-menu" role="menu">
+          <% if current_user %>
+          <li role="presentation" class="dropdown-header">
+            <%= current_user.name %>
+          </li>
+          <li>
+            <%= link_to notifications_path do %>
+            <%= t '.notifications' %>
+            <% if notification_count > 0 %>
+            <span class="badge"><%= notification_count %></span>
+            <% end %>
+            <% end %>
+          </li>
+          <li><%= link_to t('.edit_profile'), profile_edit_path %></li>
+          <% if current_user.can_view_all_users? %>
+          <li class="divider"></li>
+          <li role="presentation" class="dropdown-header">
+            <%= t '.administration' %>
+          </li>
+          <li><%= link_to t('.manage_users'), users_path %></li>
+          <% end %>
+
+          <% if current_user.can_view_delegate_matters? %>
+          <li class="divider"></li>
+          <li role="presentation" class="dropdown-header">
+            <%= t '.delegate' %>
+          </li>
+          <li><%= link_to t('.panel'), delegate_path %></li>
+          <li><%= link_to t('.new_competition'), new_competition_path if current_user.can_create_competitions? %></li>
+          <% end %>
+
+          <% if current_user.can_admin_results? %>
+          <li class="divider"></li>
+          <li role="presentation" class="dropdown-header">
+            <%= t '.results_team' %>
+          </li>
+          <li><%= link_to t('.results_admin'), admin_path %></li>
+          <li><%= link_to t('.competitions'), competitions_path %></li>
+          <li><%= link_to t('.results_phpmyadmin'), '/results/admin/phpMyAdmin/' %></li>
+          <% end %>
+
+          <% if current_user.can_create_posts? %>
+          <li class="divider"></li>
+          <li><%= link_to t('.new_post'), new_post_path %></li>
+          <% end %>
+
+          <% unless current_user.teams_where_is_leader.empty? %>
+          <li class="divider"></li>
+          <li role="presentation" class="dropdown-header">
+            <%= t '.team_leader' %>
+          </li>
+          <% current_user.teams_where_is_leader.each do |team| %>
+          <li><%= link_to team.name, edit_team_path(team) %></li>
+          <% end %>
+          <% end %>
+
+          <!-- Don't show the link for admins, as they have it in the dedicated admin navigation. -->
+          <% if current_user.can_see_eligible_voters? && !current_user.can_admin_results? %>
+          <li class="divider"></li>
+          <li><%= link_to "WCA Voting Members", eligible_voters_path %></li>
+          <li><%= link_to "WCA Leaders and Seniors", leader_senior_voters_path %></li>
+          <% end %>
+
+          <li class="divider"></li>
+          <li><%= link_to t('.api'), api_path %></li>
+          <li><%= link_to t('.manage_app'), oauth_applications_path %></li>
+          <li><%= link_to t('.manage_auth_app'), oauth_authorized_applications_path %></li>
+
+          <li class="divider"></li>
+          <li><%= link_to(t('.sign_out'), destroy_user_session_path, :method => :delete) %></li>
+          <% else %>
+          <li><%= link_to(t('devise.shared.links.sign_in'), new_user_session_path, class: "top-nav") %></li>
+          <li class="divider"></li>
+          <li><%= link_to(t('devise.shared.links.sign_up'), new_user_registration_path) %></li>
+          <li>
+            <%= link_to(t('devise.shared.links.didn_t_receive_confirmation_instructions'), new_user_confirmation_path) %>
+          </li>
+          <% end %>
+        </ul>
+      </li>
+    </ul>
+
+  </div>
+
+
+  <div class="container-fluid">
     <div class="navbar-header">
       <button type="button" class="navbar-toggle" data-toggle="collapse" data-target=".navbar-collapse">
         <span class="sr-only">Toggle navigation</span>
@@ -20,12 +151,16 @@
         <span class="icon-bar"></span>
         <span class="icon-bar"></span>
       </button>
+      <a class="navbar-brand" href="<%= root_path %>"><%= image_tag "wca_logo.svg" %></a>
     </div>
+
     <div class="navbar-collapse collapse disabled">
       <ul class="nav navbar-nav">
-        <li class="dropdown <%= params[:controller] == 'static_pages' || params[:controller] == 'posts' ? 'active' : '' %>">
+        <li
+          class="dropdown <%= params[:controller] == 'static_pages' || params[:controller] == 'posts' ? 'active' : '' %>">
           <a href="/" class="dropdown-toggle top-nav" data-toggle="dropdown" data-hover="dropdown">
-            <%= icon('info-circle') %> <span class="hidden-sm"><%= t '.information' %></span> <span class="caret"></span>
+            <%= icon('info-circle') %> <span class="hidden-sm"><%= t '.information' %></span> <span
+              class="caret"></span>
           </a>
           <ul class="dropdown-menu" role="menu">
             <li><a href="<%= about_path %>"><%= icon('file-text') %> <%= t '.about' %></a></li>
@@ -40,18 +175,19 @@
             <li><a href="<%= disclaimer_path %>"><%= icon('exclamation-circle') %> Disclaimer</a></li>
             <li class="divider"></li>
             <li><a href="<%= score_tools_path %>"><%= icon('wrench') %> <%= t '.tools' %></a></li>
-            <li><a href="<%= logo_path %>"><%= image_tag('wca_logo.svg', width: '16px', class: 'fa') %> <%= t '.logo' %></a></li>
+            <li><a href="<%= logo_path %>"><%= image_tag('wca_logo.svg', width: '16px', class: 'fa') %>
+                <%= t '.logo' %></a></li>
           </ul>
         </li>
         <li class="dropdown">
           <a href="" class="dropdown-toggle top-nav" data-toggle="dropdown" data-hover="dropdown">
-             <%= icon('cube') %> <%= t '.competitions' %> <span class="caret"></span>
+            <%= icon('cube') %> <%= t '.competitions' %> <span class="caret"></span>
           </a>
           <ul class="dropdown-menu" role="menu">
             <li><a href="<%= competitions_path %>"><%= icon('globe') %> <%= t '.all' %></a></li>
             <li><a href="<%= my_comps_path %>"><%= icon('list') %> <%= t '.my_competitions' %></a></li>
             <% if current_user&.can_create_competitions? %>
-              <li><a href="<%= new_competition_path %>"><%= icon('plus') %> <%= t '.new_competition' %></a></li>
+            <li><a href="<%= new_competition_path %>"><%= icon('plus') %> <%= t '.new_competition' %></a></li>
             <% end %>
           </ul>
         </li>
@@ -60,11 +196,12 @@
             <%= icon('list-ol') %> <%= t '.results' %> <span class="caret"></span>
           </a>
           <ul class="dropdown-menu" role="menu">
-            <li><a href="/results/events.php"><%= icon('signal', class: 'fa-rotate-90') %> <%= t '.rankings' %></a></li>
+            <li><a href="/results/events.php"><%= icon('signal', class: 'fa-rotate-90') %> <%= t '.rankings' %></a>
+            </li>
             <li><a href="/results/regions.php"><%= icon('trophy') %> <%= t '.records' %></a></li>
             <li><a href="<%= persons_path %>"><%= icon('users') %> <%= t '.persons' %></a></li>
             <% if current_user&.wca_id? %>
-              <li><%= link_to icon('user', t('.my_results')), person_path(current_user.wca_id) -%></li>
+            <li><%= link_to icon('user', t('.my_results')), person_path(current_user.wca_id) -%></li>
             <% end %>
             <li class="divider"></li>
             <li><a href="/results/statistics.php"><%= icon('area-chart') %> <%= t '.statistics' %></a></li>
@@ -94,116 +231,7 @@
       <form class="navbar-form navbar-left" role="search">
         <%= wca_omni_search %>
       </form>
-
-      <ul class="nav navbar-nav navbar-right">
-        <li class="dropdown">
-          <a href="#" class="dropdown-toggle top-nav" data-toggle="dropdown" data-hover="dropdown">
-            <% active_locale_info = Locales::AVAILABLE[I18n.locale] %>
-            <%= flag_icon active_locale_info[:flag_id] %> <span class="hidden-sm"><%= active_locale_info[:name] %></span>
-            <span class="caret"></span>
-          </a>
-          <ul class="dropdown-menu" id="locale-selector" role="menu">
-            <% Locales::AVAILABLE.each do |l, data| %>
-              <li class="<%= l == I18n.locale ? "active" : "" %>">
-                <%= link_to update_locale_path(l) do %>
-                  <%= flag_icon data[:flag_id] %> <%= data[:name] %>
-                <% end %>
-              </li>
-            <% end %>
-          </ul>
-        </li>
-        <li class="dropdown">
-          <a href="#" class="dropdown-toggle top-nav" data-toggle="dropdown" data-hover="dropdown">
-            <% if current_user %>
-              <% notification_count = notifications_for_user(current_user).length %>
-              <%= render "shared/user_avatar", user: current_user, do_not_show_full_image_on_hover: true %>
-              <% if notification_count > 0 %>
-                <span class="badge"><%= notification_count %></span>
-              <% end %>
-            <% else %>
-              <%= t 'devise.shared.links.sign_in' %>
-            <% end %>
-            <span class="caret"></span>
-          </a>
-          <ul class="dropdown-menu" role="menu">
-            <% if current_user %>
-              <li role="presentation" class="dropdown-header">
-                <%= current_user.name %>
-              </li>
-              <li>
-                <%= link_to notifications_path do %>
-                  <%= t '.notifications' %>
-                  <% if notification_count > 0 %>
-                    <span class="badge"><%= notification_count %></span>
-                  <% end %>
-                <% end %>
-              </li>
-              <li><%= link_to t('.edit_profile'), profile_edit_path %></li>
-              <% if current_user.can_view_all_users? %>
-                <li class="divider"></li>
-                <li role="presentation" class="dropdown-header">
-                  <%= t '.administration' %>
-                </li>
-                <li><%= link_to t('.manage_users'), users_path %></li>
-              <% end %>
-
-              <% if current_user.can_view_delegate_matters? %>
-                <li class="divider"></li>
-                <li role="presentation" class="dropdown-header">
-                  <%= t '.delegate' %>
-                </li>
-                <li><%= link_to t('.panel'), delegate_path %></li>
-                <li><%= link_to t('.new_competition'), new_competition_path if current_user.can_create_competitions? %></li>
-              <% end %>
-
-              <% if current_user.can_admin_results? %>
-                <li class="divider"></li>
-                <li role="presentation" class="dropdown-header">
-                  <%= t '.results_team' %>
-                </li>
-                <li><%= link_to t('.results_admin'), admin_path %></li>
-                <li><%= link_to t('.competitions'), competitions_path %></li>
-                <li><%= link_to t('.results_phpmyadmin'), '/results/admin/phpMyAdmin/' %></li>
-              <% end %>
-
-              <% if current_user.can_create_posts? %>
-                <li class="divider"></li>
-                <li><%= link_to t('.new_post'), new_post_path %></li>
-              <% end %>
-
-              <% unless current_user.teams_where_is_leader.empty? %>
-                <li class="divider"></li>
-                <li role="presentation" class="dropdown-header">
-                  <%= t '.team_leader' %>
-                </li>
-                <% current_user.teams_where_is_leader.each do |team| %>
-                  <li><%= link_to team.name, edit_team_path(team) %></li>
-                <% end %>
-              <% end %>
-
-              <!-- Don't show the link for admins, as they have it in the dedicated admin navigation. -->
-              <% if current_user.can_see_eligible_voters? && !current_user.can_admin_results? %>
-                <li class="divider"></li>
-                <li><%= link_to "WCA Voting Members", eligible_voters_path %></li>
-                <li><%= link_to "WCA Leaders and Seniors", leader_senior_voters_path %></li>
-              <% end %>
-
-              <li class="divider"></li>
-              <li><%= link_to t('.api'), api_path %></li>
-              <li><%= link_to t('.manage_app'), oauth_applications_path %></li>
-              <li><%= link_to t('.manage_auth_app'), oauth_authorized_applications_path %></li>
-
-              <li class="divider"></li>
-              <li><%= link_to(t('.sign_out'), destroy_user_session_path, :method => :delete) %></li>
-            <% else %>
-              <li><%= link_to(t('devise.shared.links.sign_in'), new_user_session_path, class: "top-nav") %></li>
-              <li class="divider"></li>
-              <li><%= link_to(t('devise.shared.links.sign_up'), new_user_registration_path) %></li>
-              <li><%= link_to(t('devise.shared.links.didn_t_receive_confirmation_instructions'), new_user_confirmation_path) %></li>
-            <% end %>
-          </ul>
-        </li>
-      </ul>
-    </div><!--/.nav-collapse -->
+    </div>
   </div>
+
 </div>
